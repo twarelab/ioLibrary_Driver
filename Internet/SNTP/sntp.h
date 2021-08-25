@@ -18,7 +18,7 @@ extern "C" {
  * @brief Define it for Debug & Monitor DNS processing.
  * @note If defined, it dependens on <stdio.h>
  */
-//#define _SNTP_DEBUG_
+#define _SNTP_DEBUG_
 
 #define	MAX_SNTP_BUF_SIZE	sizeof(ntpformat)		///< maximum size of DNS buffer. */
 

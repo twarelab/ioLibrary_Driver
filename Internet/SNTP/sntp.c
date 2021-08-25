@@ -132,7 +132,7 @@ void get_seconds_from_ntp_server(uint8_t *buf, uint16_t idx)
 	case 20:
 		seconds -=  1*3600;
 		break;
-	case 21:                            //ï¼?
+	case 21:                            //ï¿½?
 	case 22:
 		break;
 	case 23:
@@ -281,6 +281,9 @@ int8_t SNTP_run(datetime *time)
 			if(ntp_retry_cnt==0)//first send request, no need to wait
 			{
 				sendto(NTP_SOCKET,ntpmessage,sizeof(ntpmessage),NTPformat.dstaddr,ntp_port);
+#ifdef _SNTP_DEBUG_
+				printf("ntp sendto at %d\r\n", ntp_retry_cnt);
+#endif
 				ntp_retry_cnt++;
 			}
 			else // send request again? it should wait for a while
