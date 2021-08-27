@@ -13,6 +13,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include <inttypes.h>
 
 /*
  * @brief Define it for Debug & Monitor DNS processing.
@@ -56,18 +57,22 @@ typedef struct _datetime
 	uint8_t hh;
 	uint8_t mm;
 	uint8_t ss;
+	uint8_t dayofweek;
 } datetime;
 
 #define ntp_port		123                     //ntp server port number
 #define SECS_PERDAY		86400UL             	// seconds in a day = 60*60*24
 #define UTC_ADJ_HRS		9              	        // SEOUL : GMT+9
 #define EPOCH			1900                    // NTP start year
+#define EPOCH_1970		2208988800UL			// EPOCH (Jan 1 1970)
+
 
 void get_seconds_from_ntp_server(uint8_t *buf, uint16_t idx);
 void SNTP_init(uint8_t s, uint8_t *ntp_server, uint8_t tz, uint8_t *buf);
 int8_t SNTP_run(datetime *time);
 tstamp changedatetime_to_seconds(void);
 void calcdatetime(tstamp seconds);
+char * getDayOfWeek(uint8_t index);
 
 #ifdef __cplusplus
 }

@@ -7,6 +7,7 @@
 
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "sntp.h"
 #include "socket.h"
@@ -18,6 +19,8 @@ uint8_t *data_buf;
 uint8_t NTP_SOCKET;
 uint8_t time_zone;
 uint16_t ntp_retry_cnt=0; //counting the ntp retry number
+
+char DayOfWeek[7][4] = {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
 
 /*
 00)UTC-12:00 Baker Island, Howland Island (both uninhabited)
@@ -74,11 +77,15 @@ uint16_t ntp_retry_cnt=0; //counting the ntp retry number
 void get_seconds_from_ntp_server(uint8_t *buf, uint16_t idx)
 {
 	tstamp seconds = 0;
+	char dummy[255];
+
 	uint8_t i=0;
 	for (i = 0; i < 4; i++)
 	{
 		seconds = (seconds << 8) | buf[idx + i];
 	}
+	printf("seconds: %llu in get_seconds_from_ntp_server\r\n", seconds);
+	printf("day of weeks: %d\r\n", (seconds / SECS_PERDAY) % 7);
 	switch (time_zone)
 	{
 	case 0:
@@ -211,6 +218,8 @@ void get_seconds_from_ntp_server(uint8_t *buf, uint16_t idx)
 
 	}
 
+	printf("revised seconds with time_zone[%d]: %llu in get_seconds_from_ntp_server\r\n", time_zone, seconds);
+
 	//calculation for date
 	calcdatetime(seconds);
 }
@@ -269,6 +278,7 @@ int8_t SNTP_run(datetime *time)
 			time->hh = Nowdatetime.hh;
 			time->mm = Nowdatetime.mm;
 			time->ss = Nowdatetime.ss;
+			time->dayofweek = Nowdatetime.dayofweek;
 
 			ntp_retry_cnt=0;
 			close(NTP_SOCKET);
@@ -319,9 +329,11 @@ int8_t SNTP_run(datetime *time)
 void calcdatetime(tstamp seconds)
 {
 	uint8_t yf=0;
-	tstamp n=0,d=0,total_d=0,rz=0;
+	tstamp n=0,d=0,total_d=0,rz=0, tmp_s;
 	uint16_t y=0,r=0,yr=0;
 	signed long long yd=0;
+
+	uint16_t tmp_days;
 
 	n = seconds;
 	total_d = seconds/(SECS_PERDAY);
@@ -395,6 +407,17 @@ void calcdatetime(tstamp seconds)
 	Nowdatetime.dd=yr;
 
 	//calculation for time
+	printf("seconds2: %llu\r\n", seconds);
+
+	Nowdatetime.dayofweek = (seconds / SECS_PERDAY + 1) % 7;
+
+//	tmp_s = seconds;
+//	for(int i=0; i<7; i++)
+//	{
+//		tmp_days = tmp_s / SECS_PERDAY;
+//		printf("dayofweek - %d : %d\r\n", i, (tmp_days % 7));
+//		tmp_s = tmp_s - SECS_PERDAY;
+//	}
 	seconds = seconds%SECS_PERDAY;
 	Nowdatetime.hh = seconds/3600;
 	Nowdatetime.mm = (seconds%3600)/60;
@@ -450,4 +473,9 @@ tstamp changedatetime_to_seconds(void)
 	seconds += Nowdatetime.hh*3600;//hour
 
 	return seconds;
+}
+
+char * getDayOfWeek(uint8_t index)
+{
+	return DayOfWeek[index];
 }
