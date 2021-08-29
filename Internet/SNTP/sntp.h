@@ -71,7 +71,9 @@ void get_seconds_from_ntp_server(uint8_t *buf, uint16_t idx);
 void SNTP_init(uint8_t s, uint8_t *ntp_server, uint8_t tz, uint8_t *buf);
 int8_t SNTP_run(datetime *time);
 tstamp changedatetime_to_seconds(void);
-void calcdatetime(tstamp seconds);
+//void calcdatetime(tstamp seconds);
+datetime calcdatetime(tstamp seconds);
+
 char * getDayOfWeek(uint8_t index);
 
 #ifdef __cplusplus

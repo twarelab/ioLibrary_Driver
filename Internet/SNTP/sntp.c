@@ -221,7 +221,7 @@ void get_seconds_from_ntp_server(uint8_t *buf, uint16_t idx)
 	printf("revised seconds with time_zone[%d]: %llu in get_seconds_from_ntp_server\r\n", time_zone, seconds);
 
 	//calculation for date
-	calcdatetime(seconds);
+	Nowdatetime = calcdatetime(seconds);
 }
 
 void SNTP_init(uint8_t s, uint8_t *ntp_server, uint8_t tz, uint8_t *buf)
@@ -326,12 +326,14 @@ int8_t SNTP_run(datetime *time)
 	return 0;
 }
 
-void calcdatetime(tstamp seconds)
+datetime calcdatetime(tstamp seconds)
 {
 	uint8_t yf=0;
 	tstamp n=0,d=0,total_d=0,rz=0, tmp_s;
 	uint16_t y=0,r=0,yr=0;
 	signed long long yd=0;
+
+	datetime tmp_datetime;
 
 	uint16_t tmp_days;
 
@@ -359,7 +361,7 @@ void calcdatetime(tstamp seconds)
 
 	y += EPOCH;
 
-	Nowdatetime.yy = y;
+	tmp_datetime.yy = y;
 
 	yd=0;
 	yd = total_d - d;
@@ -399,17 +401,17 @@ void calcdatetime(tstamp seconds)
 		yf += 1;
 
 	}
-	Nowdatetime.mo=yf;
+	tmp_datetime.mo=yf;
 	yr = total_d-d-rz;
 
 	yr += 1;
 
-	Nowdatetime.dd=yr;
+	tmp_datetime.dd=yr;
 
 	//calculation for time
 	printf("seconds2: %llu\r\n", seconds);
 
-	Nowdatetime.dayofweek = (seconds / SECS_PERDAY + 1) % 7;
+	tmp_datetime.dayofweek = (seconds / SECS_PERDAY + 1) % 7;
 
 //	tmp_s = seconds;
 //	for(int i=0; i<7; i++)
@@ -419,11 +421,113 @@ void calcdatetime(tstamp seconds)
 //		tmp_s = tmp_s - SECS_PERDAY;
 //	}
 	seconds = seconds%SECS_PERDAY;
-	Nowdatetime.hh = seconds/3600;
-	Nowdatetime.mm = (seconds%3600)/60;
-	Nowdatetime.ss = (seconds%3600)%60;
+	tmp_datetime.hh = seconds/3600;
+	tmp_datetime.mm = (seconds%3600)/60;
+	tmp_datetime.ss = (seconds%3600)%60;
+
+	return tmp_datetime;
 
 }
+
+//void calcdatetime(tstamp seconds)
+//{
+//	uint8_t yf=0;
+//	tstamp n=0,d=0,total_d=0,rz=0, tmp_s;
+//	uint16_t y=0,r=0,yr=0;
+//	signed long long yd=0;
+//
+//	uint16_t tmp_days;
+//
+//	n = seconds;
+//	total_d = seconds/(SECS_PERDAY);
+//	d=0;
+//	uint32_t p_year_total_sec=SECS_PERDAY*365;
+//	uint32_t r_year_total_sec=SECS_PERDAY*366;
+//	while(n>=p_year_total_sec)
+//	{
+//		if((EPOCH+r)%400==0 || ((EPOCH+r)%100!=0 && (EPOCH+r)%4==0))
+//		{
+//			n = n -(r_year_total_sec);
+//			d = d + 366;
+//		}
+//		else
+//		{
+//			n = n - (p_year_total_sec);
+//			d = d + 365;
+//		}
+//		r+=1;
+//		y+=1;
+//
+//	}
+//
+//	y += EPOCH;
+//
+//	Nowdatetime.yy = y;
+//
+//	yd=0;
+//	yd = total_d - d;
+//
+//	yf=1;
+//	while(yd>=28)
+//	{
+//
+//		if(yf==1 || yf==3 || yf==5 || yf==7 || yf==8 || yf==10 || yf==12)
+//		{
+//			yd -= 31;
+//			if(yd<0)break;
+//			rz += 31;
+//		}
+//
+//		if (yf==2)
+//		{
+//			if (y%400==0 || (y%100!=0 && y%4==0))
+//			{
+//				yd -= 29;
+//				if(yd<0)break;
+//				rz += 29;
+//			}
+//			else
+//			{
+//				yd -= 28;
+//				if(yd<0)break;
+//				rz += 28;
+//			}
+//		}
+//		if(yf==4 || yf==6 || yf==9 || yf==11 )
+//		{
+//			yd -= 30;
+//			if(yd<0)break;
+//			rz += 30;
+//		}
+//		yf += 1;
+//
+//	}
+//	Nowdatetime.mo=yf;
+//	yr = total_d-d-rz;
+//
+//	yr += 1;
+//
+//	Nowdatetime.dd=yr;
+//
+//	//calculation for time
+//	printf("seconds2: %llu\r\n", seconds);
+//
+//	Nowdatetime.dayofweek = (seconds / SECS_PERDAY + 1) % 7;
+//
+////	tmp_s = seconds;
+////	for(int i=0; i<7; i++)
+////	{
+////		tmp_days = tmp_s / SECS_PERDAY;
+////		printf("dayofweek - %d : %d\r\n", i, (tmp_days % 7));
+////		tmp_s = tmp_s - SECS_PERDAY;
+////	}
+//	seconds = seconds%SECS_PERDAY;
+//	Nowdatetime.hh = seconds/3600;
+//	Nowdatetime.mm = (seconds%3600)/60;
+//	Nowdatetime.ss = (seconds%3600)%60;
+//
+//}
+
 
 tstamp changedatetime_to_seconds(void)
 {
