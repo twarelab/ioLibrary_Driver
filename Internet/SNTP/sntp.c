@@ -409,7 +409,7 @@ datetime calcdatetime(tstamp seconds)
 	tmp_datetime.dd=yr;
 
 	//calculation for time
-	printf("seconds2: %llu\r\n", seconds);
+//	printf("seconds2: %llu\r\n", seconds);
 
 	tmp_datetime.dayofweek = (seconds / SECS_PERDAY + 1) % 7;
 
