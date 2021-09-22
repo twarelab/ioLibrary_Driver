@@ -5,7 +5,7 @@
  *      Author: Administrator
  */
 
-
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -77,7 +77,7 @@ char DayOfWeek[7][4] = {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
 void get_seconds_from_ntp_server(uint8_t *buf, uint16_t idx)
 {
 	tstamp seconds = 0;
-	char dummy[255];
+//	char dummy[255];
 
 	uint8_t i=0;
 	for (i = 0; i < 4; i++)
@@ -85,7 +85,7 @@ void get_seconds_from_ntp_server(uint8_t *buf, uint16_t idx)
 		seconds = (seconds << 8) | buf[idx + i];
 	}
 	printf("seconds: %llu in get_seconds_from_ntp_server\r\n", seconds);
-	printf("day of weeks: %d\r\n", (seconds / SECS_PERDAY) % 7);
+	printf("day of weeks: %d\r\n", (int)((seconds / SECS_PERDAY) % 7));
 	switch (time_zone)
 	{
 	case 0:
@@ -329,13 +329,14 @@ int8_t SNTP_run(datetime *time)
 datetime calcdatetime(tstamp seconds)
 {
 	uint8_t yf=0;
-	tstamp n=0,d=0,total_d=0,rz=0, tmp_s;
+	tstamp n=0,d=0,total_d=0,rz=0;
+//	tstamp tmp_s;
 	uint16_t y=0,r=0,yr=0;
 	signed long long yd=0;
 
 	datetime tmp_datetime;
 
-	uint16_t tmp_days;
+//	uint16_t tmp_days;
 
 	n = seconds;
 	total_d = seconds/(SECS_PERDAY);
