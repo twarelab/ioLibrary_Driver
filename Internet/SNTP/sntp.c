@@ -294,7 +294,6 @@ int8_t SNTP_run(datetime *time)
 #ifdef _SNTP_DEBUG_
 				printf("ntp sendto at %d\r\n", ntp_retry_cnt);
 #endif
-				ntp_retry_cnt++;
 			}
 			else // send request again? it should wait for a while
 			{
@@ -304,9 +303,9 @@ int8_t SNTP_run(datetime *time)
 #ifdef _SNTP_DEBUG_
 					printf("ntp retry: %d\r\n", ntp_retry_cnt);
 #endif
-					ntp_retry_cnt++;
 				}
 			}
+			ntp_retry_cnt++;
 		}
 		else //ntp retry fail
 		{
