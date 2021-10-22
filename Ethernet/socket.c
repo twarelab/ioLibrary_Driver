@@ -531,6 +531,7 @@ int32_t sendto(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t
    setSn_DPORT(sn,port);      
    freesize = getSn_TxMAX(sn);
    if (len > freesize) len = freesize; // check size not to exceed MAX size.
+//   printf("3\r\n");
    while(1)
    {
       freesize = getSn_TX_FSR(sn);
@@ -538,6 +539,7 @@ int32_t sendto(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t
       if( (sock_io_mode & (1<<sn)) && (len > freesize) ) return SOCK_BUSY;
       if(len <= freesize) break;
    };
+//   printf("4\r\n");
 	wiz_send_data(sn, buf, len);
 
    #if _WIZCHIP_ < 5500   //M20150401 : for WIZCHIP Errata #4, #5 (ARP errata)
@@ -558,6 +560,8 @@ int32_t sendto(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t
 	setSn_CR(sn,Sn_CR_SEND);
 	/* wait to process the command... */
 	while(getSn_CR(sn));
+//	   printf("5\r\n");
+
    while(1)
    {
       tmp = getSn_IR(sn);
@@ -581,6 +585,8 @@ int32_t sendto(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t
       }
       ////////////
    }
+//   printf("6\r\n");
+
    #if _WIZCHIP_ < 5500   //M20150401 : for WIZCHIP Errata #4, #5 (ARP errata)
       if(taddr) setSUBR((uint8_t*)&taddr);
    #endif

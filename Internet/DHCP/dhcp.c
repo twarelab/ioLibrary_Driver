@@ -903,8 +903,13 @@ int8_t check_DHCP_leasedIP(void)
 
 	// IP conflict detection : ARP request - ARP reply
 	// Broadcasting ARP Request for check the IP conflict using UDP sendto() function
+//	printf("1 DHCP_allocated_ip: %d.%d.%d.%d\r\n",
+//			DHCP_allocated_ip[0],
+//			DHCP_allocated_ip[1],
+//			DHCP_allocated_ip[2],
+//			DHCP_allocated_ip[3]);
 	ret = sendto(DHCP_SOCKET, (uint8_t *)"CHECK_IP_CONFLICT", 17, DHCP_allocated_ip, 5000);
-
+//	printf("2\r\n");
 	// RCR value restore
 	setRCR(tmp);
 
