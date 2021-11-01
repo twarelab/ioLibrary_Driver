@@ -217,8 +217,9 @@ uint8_t * dns_question(uint8_t * msg, uint8_t * cp)
 	char name[MAXCNAME];
 
 	len = parse_name(msg, cp, name, MAXCNAME);
-
-
+#ifdef _DNS_DEUBG_
+	printf("dns_question, name: %s\r\n", name);
+#endif
 	if (len == -1) return 0;
 
 	cp += len;
@@ -243,7 +244,9 @@ uint8_t * dns_answer(uint8_t * msg, uint8_t * cp, uint8_t * ip_from_dns)
 	char name[MAXCNAME];
 
 	len = parse_name(msg, cp, name, MAXCNAME);
-
+#ifdef _DNS_DEUBG_
+	printf("dns_answer, name: %s\r\n", name);
+#endif
 	if (len == -1) return 0;
 
 	cp += len;
@@ -257,6 +260,9 @@ uint8_t * dns_answer(uint8_t * msg, uint8_t * cp, uint8_t * ip_from_dns)
 	switch (type)
 	{
 	case TYPE_A:
+#ifdef _DNS_DEUBG_
+		printf("Type A\r\n");
+#endif
 		/* Just read the address directly into the structure */
 		ip_from_dns[0] = *cp++;
 		ip_from_dns[1] = *cp++;
@@ -269,6 +275,9 @@ uint8_t * dns_answer(uint8_t * msg, uint8_t * cp, uint8_t * ip_from_dns)
 	case TYPE_MR:
 	case TYPE_NS:
 	case TYPE_PTR:
+#ifdef _DNS_DEUBG_
+		printf("Type %d\r\n", type);
+#endif
 		/* These types all consist of a single domain name */
 		/* convert it to ascii format */
 		len = parse_name(msg, cp, name, MAXCNAME);
@@ -277,6 +286,9 @@ uint8_t * dns_answer(uint8_t * msg, uint8_t * cp, uint8_t * ip_from_dns)
 		cp += len;
 		break;
 	case TYPE_HINFO:
+#ifdef _DNS_DEUBG_
+		printf("TYPE_HINFO\r\n");
+#endif
 		len = *cp++;
 		cp += len;
 
@@ -284,6 +296,9 @@ uint8_t * dns_answer(uint8_t * msg, uint8_t * cp, uint8_t * ip_from_dns)
 		cp += len;
 		break;
 	case TYPE_MX:
+#ifdef _DNS_DEUBG_
+		printf("TYPE_MX\r\n");
+#endif
 		cp += 2;
 		/* Get domain name of exchanger */
 		len = parse_name(msg, cp, name, MAXCNAME);
@@ -292,6 +307,9 @@ uint8_t * dns_answer(uint8_t * msg, uint8_t * cp, uint8_t * ip_from_dns)
 		cp += len;
 		break;
 	case TYPE_SOA:
+#ifdef _DNS_DEUBG_
+		printf("TYPE_SOA\r\n");
+#endif
 		/* Get domain name of name server */
 		len = parse_name(msg, cp, name, MAXCNAME);
 		if (len == -1) return 0;
@@ -311,6 +329,9 @@ uint8_t * dns_answer(uint8_t * msg, uint8_t * cp, uint8_t * ip_from_dns)
 		cp += 4;
 		break;
 	case TYPE_TXT:
+#ifdef _DNS_DEUBG_
+		printf("TYPE_TXT\r\n");
+#endif
 		/* Just stash */
 		break;
 	default:
@@ -343,22 +364,42 @@ int8_t parseDNSMSG(struct dhdr * pdhdr, uint8_t * pbuf, uint8_t * ip_from_dns)
 	memset(pdhdr, 0, sizeof(*pdhdr));
 
 	pdhdr->id = get16(&msg[0]);
+#ifdef _DNS_DEUBG_
+	printf("ID: %d\r\n", pdhdr->id);
+#endif
 	tmp = get16(&msg[2]);
 	if (tmp & 0x8000) pdhdr->qr = 1;
+#ifdef _DNS_DEUBG_
+	printf("QR: %d\r\n", pdhdr->qr);
+#endif
 
 	pdhdr->opcode = (tmp >> 11) & 0xf;
+#ifdef _DNS_DEUBG_
+	printf("OPCODE: %d\r\n", pdhdr->opcode);
+#endif
 
 	if (tmp & 0x0400) pdhdr->aa = 1;
 	if (tmp & 0x0200) pdhdr->tc = 1;
 	if (tmp & 0x0100) pdhdr->rd = 1;
 	if (tmp & 0x0080) pdhdr->ra = 1;
-
+#ifdef _DNS_DEUBG_
+	printf("pdhdr->aa: %d\r\n", pdhdr->aa);
+	printf("pdhdr->tc: %d\r\n", pdhdr->tc);
+	printf("pdhdr->rd: %d\r\n", pdhdr->rd);
+	printf("pdhdr->ra: %d\r\n", pdhdr->ra);
+#endif
 	pdhdr->rcode = tmp & 0xf;
 	pdhdr->qdcount = get16(&msg[4]);
 	pdhdr->ancount = get16(&msg[6]);
 	pdhdr->nscount = get16(&msg[8]);
 	pdhdr->arcount = get16(&msg[10]);
-
+#ifdef _DNS_DEUBG_
+	printf("pdhdr->rcode: %d\r\n", pdhdr->rcode);
+	printf("pdhdr->qdcount: %d\r\n", pdhdr->qdcount);
+	printf("pdhdr->ancount: %d\r\n", pdhdr->ancount);
+	printf("pdhdr->nscount: %d\r\n", pdhdr->nscount);
+	printf("pdhdr->arcount: %d\r\n", pdhdr->arcount);
+#endif
 
 	/* Now parse the variable length sections */
 	cp = &msg[12];
@@ -506,6 +547,7 @@ int8_t DNS_run(uint8_t * dns_ip, uint8_t * name, uint8_t * ip_from_dns)
 	uint8_t ip[4];
 	uint16_t len, port;
 	int8_t ret_check_timeout;
+	int i;
 
 	retry_count = 0;
 	dns_1s_tick = 0;
@@ -528,8 +570,13 @@ int8_t DNS_run(uint8_t * dns_ip, uint8_t * name, uint8_t * ip_from_dns)
 			len = recvfrom(DNS_SOCKET, pDNSMSG, len, ip, &port);
       #ifdef _DNS_DEBUG_
 	      printf("> Receive DNS message from %d.%d.%d.%d(%d). len = %d\r\n", ip[0], ip[1], ip[2], ip[3],port,len);
+//	      printf("Received DNS message:\r\n");
+//	      for(i=0; i<len; i++)
+//	    	  printf("%02X ", pDNSMSG[i]);
+//	      printf("\r\n");
       #endif
          ret = parseDNSMSG(&dhp, pDNSMSG, ip_from_dns);
+         printf("parseDNSMSG ret: %d\r\n", ret);
 			break;
 		}
 		// Check Timeout
