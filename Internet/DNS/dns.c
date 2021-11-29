@@ -122,6 +122,19 @@ uint16_t DNS_MSGID;     // DNS message ID
 uint32_t dns_1s_tick;   // for timout of DNS processing
 static uint8_t retry_count;
 
+typedef enum {
+	DNS_STATE_IDLE 			= 0,
+	DNS_STATE_SOCK_CREATE	= 1,
+	DNS_STATE_SEND_REQUEST	= 2,
+	DNS_STATE_REPLY_RCVD	= 3,
+	DNS_STATE_FAILED 		= 4,
+	DNS_STATE_FINISHED		= 5
+};
+
+static uint8_t dnsState = DNS_STATE_IDLE;
+
+
+
 /* converts uint16_t from network buffer to a host byte order integer. */
 uint16_t get16(uint8_t * s)
 {
@@ -517,6 +530,7 @@ int8_t check_DNS_timeout(void)
 
 	if(dns_1s_tick >= DNS_WAIT_TIME)
 	{
+		printf("dns_1s_tick: %d in check_DNS_timeout\r\n", dns_1s_tick);
 		dns_1s_tick = 0;
 		if(retry_count >= MAX_DNS_RETRY) {
 			retry_count = 0;
@@ -537,9 +551,14 @@ void DNS_init(uint8_t s, uint8_t * buf)
 	DNS_SOCKET = s; // SOCK_DNS
 	pDNSMSG = buf; // User's shared buffer
 	DNS_MSGID = DNS_MSG_ID;
+	dnsState = DNS_STATE_IDLE;
+#ifdef _DNS_DEBUG_
+    printf("> DNS_init. dnsState will be changed to DNS_STATE_IDLE\r\n");
+#endif
 }
 
 /* DNS CLIENT RUN */
+
 int8_t DNS_run(uint8_t * dns_ip, uint8_t * name, uint8_t * ip_from_dns)
 {
 	int8_t ret;
@@ -549,59 +568,153 @@ int8_t DNS_run(uint8_t * dns_ip, uint8_t * name, uint8_t * ip_from_dns)
 	int8_t ret_check_timeout;
 	int i;
 
-	retry_count = 0;
-	dns_1s_tick = 0;
+	ret = -2;
 
-   // Socket open
-   socket(DNS_SOCKET, Sn_MR_UDP, 0, 0);
-
-#ifdef _DNS_DEBUG_
-	printf("> DNS Query to DNS Server : %d.%d.%d.%d\r\n", dns_ip[0], dns_ip[1], dns_ip[2], dns_ip[3]);
-#endif
-
-	len = dns_makequery(0, (char *)name, pDNSMSG, MAX_DNS_BUF_SIZE);
-	sendto(DNS_SOCKET, pDNSMSG, len, dns_ip, IPPORT_DOMAIN);
-
-	while (1)
+	switch(dnsState)
 	{
+	case DNS_STATE_IDLE:
+		retry_count = 0;
+		dns_1s_tick = 0;
+		// socket create
+		socket(DNS_SOCKET, Sn_MR_UDP, 0, SF_IO_NONBLOCK);
+		len = dns_makequery(0, (char *)name, pDNSMSG, MAX_DNS_BUF_SIZE);
+		dnsState = DNS_STATE_SOCK_CREATE;
+		#ifdef _DNS_DEBUG_
+			printf("> dnsState will be changed to DNS_STATE_SOCK_CREATE in DNS_run\r\n");
+		#endif
+		break;
+	case DNS_STATE_SOCK_CREATE:
+		sendto(DNS_SOCKET, pDNSMSG, len, dns_ip, IPPORT_DOMAIN);
+		#ifdef _DNS_DEBUG_
+			printf("> DNS Query was sent to %d.%d.%d.%d\r\n", dns_ip[0], dns_ip[1], dns_ip[2], dns_ip[3]);
+		#endif
+		dnsState = DNS_STATE_SEND_REQUEST;
+		#ifdef _DNS_DEBUG_
+			printf("> dnsState will be changed to DNS_STATE_SEND_REQUEST in DNS_run\r\n");
+		#endif
+		break;
+	case DNS_STATE_SEND_REQUEST:
 		if ((len = getSn_RX_RSR(DNS_SOCKET)) > 0)
 		{
 			if (len > MAX_DNS_BUF_SIZE) len = MAX_DNS_BUF_SIZE;
 			len = recvfrom(DNS_SOCKET, pDNSMSG, len, ip, &port);
-      #ifdef _DNS_DEBUG_
-	      printf("> Receive DNS message from %d.%d.%d.%d(%d). len = %d\r\n", ip[0], ip[1], ip[2], ip[3],port,len);
-//	      printf("Received DNS message:\r\n");
-//	      for(i=0; i<len; i++)
-//	    	  printf("%02X ", pDNSMSG[i]);
-//	      printf("\r\n");
-      #endif
+		  #ifdef _DNS_DEBUG_
+			  printf("> Receive DNS message from %d.%d.%d.%d(%d). len = %d\r\n", ip[0], ip[1], ip[2], ip[3],port,len);
+		  #endif
          ret = parseDNSMSG(&dhp, pDNSMSG, ip_from_dns);
          printf("parseDNSMSG ret: %d\r\n", ret);
-			break;
 		}
-		// Check Timeout
+
+		//Timeout Check
 		ret_check_timeout = check_DNS_timeout();
-		if (ret_check_timeout < 0) {
+		if (ret_check_timeout < 0)
+		{
 
-#ifdef _DNS_DEBUG_
-			printf("> DNS Server is not responding : %d.%d.%d.%d\r\n", dns_ip[0], dns_ip[1], dns_ip[2], dns_ip[3]);
-#endif
-			close(DNS_SOCKET); //test by james
-			return 0; // timeout occurred
-		}
-		else if (ret_check_timeout == 0) {
+			#ifdef _DNS_DEBUG_
+				printf("> DNS Server is not responding : %d.%d.%d.%d\r\n", dns_ip[0], dns_ip[1], dns_ip[2], dns_ip[3]);
+			#endif
+			dnsState = DNS_STATE_FAILED;
 
-#ifdef _DNS_DEBUG_
-			printf("> DNS Timeout\r\n");
-#endif
-			sendto(DNS_SOCKET, pDNSMSG, len, dns_ip, IPPORT_DOMAIN);
+			#ifdef _DNS_DEBUG_
+				printf("> dnsState will be changed to DNS_STATE_FAILED in DNS_run\r\n");
+			#endif
 		}
+		else if (ret_check_timeout == 0)
+		{
+
+			#ifdef _DNS_DEBUG_
+				printf("> DNS Timeout. dns_1s_tick: %d\r\n", dns_1s_tick);
+			#endif
+			dnsState = DNS_STATE_SOCK_CREATE;
+
+			#ifdef _DNS_DEBUG_
+				printf("> dnsState will be changed to DNS_STATE_SOCK_CREATE in DNS_run\r\n");
+			#endif
+		}
+		break;
+	case DNS_STATE_REPLY_RCVD:
+		close(DNS_SOCKET);
+		dnsState = DNS_STATE_FINISHED;
+		#ifdef _DNS_DEBUG_
+			printf("> dnsState will be changed to DNS_STATE_FINISED in DNS_run\r\n");
+		#endif
+		break;
+	case DNS_STATE_FAILED:
+		close(DNS_SOCKET); //test by james
+		dnsState = DNS_STATE_IDLE;
+		break;
+	default:
+		break;
 	}
-	close(DNS_SOCKET);
-	// Return value
-	// 0 > :  failed / 1 - success
+
 	return ret;
 }
+
+//int8_t DNS_run(uint8_t * dns_ip, uint8_t * name, uint8_t * ip_from_dns)
+//{
+//	int8_t ret;
+//	struct dhdr dhp;
+//	uint8_t ip[4];
+//	uint16_t len, port;
+//	int8_t ret_check_timeout;
+//	int i;
+//
+//	retry_count = 0;
+//	dns_1s_tick = 0;
+//
+//   // Socket open
+//   socket(DNS_SOCKET, Sn_MR_UDP, 0, 0x01);
+//
+//#ifdef _DNS_DEBUG_
+//	printf("> DNS Query to DNS Server : %d.%d.%d.%d\r\n", dns_ip[0], dns_ip[1], dns_ip[2], dns_ip[3]);
+//#endif
+//
+//	len = dns_makequery(0, (char *)name, pDNSMSG, MAX_DNS_BUF_SIZE);
+//	sendto(DNS_SOCKET, pDNSMSG, len, dns_ip, IPPORT_DOMAIN);
+//#ifdef _DNS_DEBUG_
+//	printf("> DNS Query was sent to %d.%d.%d.%d\r\n", dns_ip[0], dns_ip[1], dns_ip[2], dns_ip[3]);
+//#endif
+//
+//	while (1)
+//	{
+//		if ((len = getSn_RX_RSR(DNS_SOCKET)) > 0)
+//		{
+//			if (len > MAX_DNS_BUF_SIZE) len = MAX_DNS_BUF_SIZE;
+//			len = recvfrom(DNS_SOCKET, pDNSMSG, len, ip, &port);
+//      #ifdef _DNS_DEBUG_
+//	      printf("> Receive DNS message from %d.%d.%d.%d(%d). len = %d\r\n", ip[0], ip[1], ip[2], ip[3],port,len);
+////	      printf("Received DNS message:\r\n");
+////	      for(i=0; i<len; i++)
+////	    	  printf("%02X ", pDNSMSG[i]);
+////	      printf("\r\n");
+//      #endif
+//         ret = parseDNSMSG(&dhp, pDNSMSG, ip_from_dns);
+//         printf("parseDNSMSG ret: %d\r\n", ret);
+//			break;
+//		}
+//		// Check Timeout
+//		ret_check_timeout = check_DNS_timeout();
+//		if (ret_check_timeout < 0) {
+//
+//#ifdef _DNS_DEBUG_
+//			printf("> DNS Server is not responding : %d.%d.%d.%d\r\n", dns_ip[0], dns_ip[1], dns_ip[2], dns_ip[3]);
+//#endif
+//			close(DNS_SOCKET); //test by james
+//			return 0; // timeout occurred
+//		}
+//		else if (ret_check_timeout == 0) {
+//
+//#ifdef _DNS_DEBUG_
+//			printf("> DNS Timeout\r\n");
+//#endif
+//			sendto(DNS_SOCKET, pDNSMSG, len, dns_ip, IPPORT_DOMAIN);
+//		}
+//	}
+//	close(DNS_SOCKET);
+//	// Return value
+//	// 0 > :  failed / 1 - success
+//	return ret;
+//}
 
 
 /* DNS TIMER HANDLER */
