@@ -676,10 +676,10 @@ int8_t parseDHCPMSG(void)
    				dhcp_lease_time  = (dhcp_lease_time << 8) + *p++;
    				dhcp_lease_time  = (dhcp_lease_time << 8) + *p++;
    				dhcp_lease_time  = (dhcp_lease_time << 8) + *p++;
-            #ifdef _DHCP_DEBUG_  
-               dhcp_lease_time = 10;
- 				#endif
-   				break;
+				#ifdef _DHCP_DEBUG_
+					printf("> dhcp_lease_time: %d\r\n", dhcp_lease_time);
+				#endif
+				break;
    			case dhcpServerIdentifier :
    				p++;
    				opt_len = *p++;
