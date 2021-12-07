@@ -790,7 +790,8 @@ uint8_t DHCP_run(void)
 
 				reset_DHCP_timeout();
 
-				dhcp_state = STATE_DHCP_REREQUEST;
+//				dhcp_state = STATE_DHCP_REREQUEST;
+				dhcp_state = STATE_DHCP_DISCOVER;
 			}
 		break;
 
