@@ -856,11 +856,11 @@ void wizchip_setnetinfo(wiz_NetInfo* pnetinfo)
    setGAR(pnetinfo->gw);
    setSUBR(pnetinfo->sn);
    setSIPR(pnetinfo->ip);
-   _DNS_[0] = pnetinfo->dns[0];
-   _DNS_[1] = pnetinfo->dns[1];
-   _DNS_[2] = pnetinfo->dns[2];
-   _DNS_[3] = pnetinfo->dns[3];
-   _DHCP_   = pnetinfo->dhcp;
+//   _DNS_[0] = pnetinfo->dns[0];
+//   _DNS_[1] = pnetinfo->dns[1];
+//   _DNS_[2] = pnetinfo->dns[2];
+//   _DNS_[3] = pnetinfo->dns[3];
+//   _DHCP_   = pnetinfo->dhcp;
 }
 
 void wizchip_getnetinfo(wiz_NetInfo* pnetinfo)
@@ -869,11 +869,11 @@ void wizchip_getnetinfo(wiz_NetInfo* pnetinfo)
    getGAR(pnetinfo->gw);
    getSUBR(pnetinfo->sn);
    getSIPR(pnetinfo->ip);
-   pnetinfo->dns[0]= _DNS_[0];
-   pnetinfo->dns[1]= _DNS_[1];
-   pnetinfo->dns[2]= _DNS_[2];
-   pnetinfo->dns[3]= _DNS_[3];
-   pnetinfo->dhcp  = _DHCP_;
+//   pnetinfo->dns[0]= _DNS_[0];
+//   pnetinfo->dns[1]= _DNS_[1];
+//   pnetinfo->dns[2]= _DNS_[2];
+//   pnetinfo->dns[3]= _DNS_[3];
+//   pnetinfo->dhcp  = _DHCP_;
 }
 
 int8_t wizchip_setnetmode(netmode_type netmode)

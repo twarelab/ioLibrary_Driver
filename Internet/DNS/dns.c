@@ -230,7 +230,7 @@ uint8_t * dns_question(uint8_t * msg, uint8_t * cp)
 	char name[MAXCNAME];
 
 	len = parse_name(msg, cp, name, MAXCNAME);
-#ifdef _DNS_DEUBG_
+#ifdef _DNS_DEBUG_
 	printf("dns_question, name: %s\r\n", name);
 #endif
 	if (len == -1) return 0;
@@ -273,7 +273,7 @@ uint8_t * dns_answer(uint8_t * msg, uint8_t * cp, uint8_t * ip_from_dns)
 	switch (type)
 	{
 	case TYPE_A:
-#ifdef _DNS_DEUBG_
+#ifdef _DNS_DEBUG_
 		printf("Type A\r\n");
 #endif
 		/* Just read the address directly into the structure */
@@ -288,7 +288,7 @@ uint8_t * dns_answer(uint8_t * msg, uint8_t * cp, uint8_t * ip_from_dns)
 	case TYPE_MR:
 	case TYPE_NS:
 	case TYPE_PTR:
-#ifdef _DNS_DEUBG_
+#ifdef _DNS_DEBUG_
 		printf("Type %d\r\n", type);
 #endif
 		/* These types all consist of a single domain name */
@@ -309,7 +309,7 @@ uint8_t * dns_answer(uint8_t * msg, uint8_t * cp, uint8_t * ip_from_dns)
 		cp += len;
 		break;
 	case TYPE_MX:
-#ifdef _DNS_DEUBG_
+#ifdef _DNS_DEBUG_
 		printf("TYPE_MX\r\n");
 #endif
 		cp += 2;
@@ -320,7 +320,7 @@ uint8_t * dns_answer(uint8_t * msg, uint8_t * cp, uint8_t * ip_from_dns)
 		cp += len;
 		break;
 	case TYPE_SOA:
-#ifdef _DNS_DEUBG_
+#ifdef _DNS_DEBUG_
 		printf("TYPE_SOA\r\n");
 #endif
 		/* Get domain name of name server */
@@ -342,7 +342,7 @@ uint8_t * dns_answer(uint8_t * msg, uint8_t * cp, uint8_t * ip_from_dns)
 		cp += 4;
 		break;
 	case TYPE_TXT:
-#ifdef _DNS_DEUBG_
+#ifdef _DNS_DEBUG_
 		printf("TYPE_TXT\r\n");
 #endif
 		/* Just stash */
@@ -377,17 +377,17 @@ int8_t parseDNSMSG(struct dhdr * pdhdr, uint8_t * pbuf, uint8_t * ip_from_dns)
 	memset(pdhdr, 0, sizeof(*pdhdr));
 
 	pdhdr->id = get16(&msg[0]);
-#ifdef _DNS_DEUBG_
+#ifdef _DNS_DEBUG_
 	printf("ID: %d\r\n", pdhdr->id);
 #endif
 	tmp = get16(&msg[2]);
 	if (tmp & 0x8000) pdhdr->qr = 1;
-#ifdef _DNS_DEUBG_
+#ifdef _DNS_DEBUG_
 	printf("QR: %d\r\n", pdhdr->qr);
 #endif
 
 	pdhdr->opcode = (tmp >> 11) & 0xf;
-#ifdef _DNS_DEUBG_
+#ifdef _DNS_DEBUG_
 	printf("OPCODE: %d\r\n", pdhdr->opcode);
 #endif
 
@@ -395,7 +395,7 @@ int8_t parseDNSMSG(struct dhdr * pdhdr, uint8_t * pbuf, uint8_t * ip_from_dns)
 	if (tmp & 0x0200) pdhdr->tc = 1;
 	if (tmp & 0x0100) pdhdr->rd = 1;
 	if (tmp & 0x0080) pdhdr->ra = 1;
-#ifdef _DNS_DEUBG_
+#ifdef _DNS_DEBUG_
 	printf("pdhdr->aa: %d\r\n", pdhdr->aa);
 	printf("pdhdr->tc: %d\r\n", pdhdr->tc);
 	printf("pdhdr->rd: %d\r\n", pdhdr->rd);
@@ -406,7 +406,7 @@ int8_t parseDNSMSG(struct dhdr * pdhdr, uint8_t * pbuf, uint8_t * ip_from_dns)
 	pdhdr->ancount = get16(&msg[6]);
 	pdhdr->nscount = get16(&msg[8]);
 	pdhdr->arcount = get16(&msg[10]);
-#ifdef _DNS_DEUBG_
+#ifdef _DNS_DEBUG_
 	printf("pdhdr->rcode: %d\r\n", pdhdr->rcode);
 	printf("pdhdr->qdcount: %d\r\n", pdhdr->qdcount);
 	printf("pdhdr->ancount: %d\r\n", pdhdr->ancount);
@@ -421,7 +421,7 @@ int8_t parseDNSMSG(struct dhdr * pdhdr, uint8_t * pbuf, uint8_t * ip_from_dns)
 	for (i = 0; i < pdhdr->qdcount; i++)
 	{
 		cp = dns_question(msg, cp);
-   #ifdef _DNS_DEUBG_
+   #ifdef _DNS_DEBUG_
       printf("MAX_DOMAIN_NAME is too small, it should be redfine in dns.h");
    #endif
 		if(!cp) return -1;
@@ -431,7 +431,7 @@ int8_t parseDNSMSG(struct dhdr * pdhdr, uint8_t * pbuf, uint8_t * ip_from_dns)
 	for (i = 0; i < pdhdr->ancount; i++)
 	{
 		cp = dns_answer(msg, cp, ip_from_dns);
-   #ifdef _DNS_DEUBG_
+   #ifdef _DNS_DEBUG_
       printf("MAX_DOMAIN_NAME is too small, it should be redfine in dns.h");
    #endif
 		if(!cp) return -1;
@@ -564,7 +564,8 @@ int8_t DNS_run(uint8_t * dns_ip, uint8_t * name, uint8_t * ip_from_dns)
 	int8_t ret;
 	struct dhdr dhp;
 	uint8_t ip[4];
-	uint16_t len, port;
+	static uint16_t len;
+	uint16_t port;
 	int8_t ret_check_timeout;
 	int i;
 
@@ -578,6 +579,7 @@ int8_t DNS_run(uint8_t * dns_ip, uint8_t * name, uint8_t * ip_from_dns)
 		// socket create
 		socket(DNS_SOCKET, Sn_MR_UDP, 0, SF_IO_NONBLOCK);
 		len = dns_makequery(0, (char *)name, pDNSMSG, MAX_DNS_BUF_SIZE);
+		printf("dns_makequery len: %d\r\n", len);
 		dnsState = DNS_STATE_SOCK_CREATE;
 		#ifdef _DNS_DEBUG_
 			printf("> dnsState will be changed to DNS_STATE_SOCK_CREATE in DNS_run\r\n");
