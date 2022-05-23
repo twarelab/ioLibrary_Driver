@@ -276,7 +276,11 @@ int8_t connect(uint8_t sn, uint8_t * addr, uint16_t port)
 	setSn_DPORT(sn,port);
 	setSn_CR(sn,Sn_CR_CONNECT);
    while(getSn_CR(sn));
-   if(sock_io_mode & (1<<sn)) return SOCK_BUSY;
+   if(sock_io_mode & (1<<sn))
+   {
+	   printf("Sock: %d, NonBlocking mode\r\n", sn);
+	   return SOCK_BUSY;
+   }
    while(getSn_SR(sn) != SOCK_ESTABLISHED)
    {
 		if (getSn_IR(sn) & Sn_IR_TIMEOUT)
