@@ -78,6 +78,7 @@ extern "C" {
 #elif defined(_W5100S_)
 #define _WIZCHIP_					   W5100S
 #endif
+#endif
 
 #define _WIZCHIP_IO_MODE_NONE_         0x0000
 #define _WIZCHIP_IO_MODE_BUS_          0x0100 /**< Bus interface mode */
