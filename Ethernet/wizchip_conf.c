@@ -54,6 +54,7 @@
 
 #include "wizchip_conf.h"
 
+
 /////////////
 //M20150401 : Remove ; in the default callback function such as wizchip_cris_enter(), wizchip_cs_select() and etc.
 /////////////

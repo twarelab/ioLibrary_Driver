@@ -58,6 +58,7 @@
 extern "C" {
 #endif
 
+#if defined(_W5100S_) || defined(_W5500_)
 #include <stdint.h>
 /**
  * @brief Select WIZCHIP.
@@ -72,7 +73,10 @@ extern "C" {
 #define W5500						5500
 
 #ifndef _WIZCHIP_
-#define _WIZCHIP_                      W5100S   // W5100, W5100S, W5200, W5300, W5500
+#if defined(_W5500_)
+#define _WIZCHIP_                      W5500   // W5100, W5100S, W5200, W5300, W5500
+#elif defined(_W5100S_)
+#define _WIZCHIP_					   W5100S
 #endif
 
 #define _WIZCHIP_IO_MODE_NONE_         0x0000
@@ -656,6 +660,8 @@ void wizchip_settimeout(wiz_NetTimeout* nettime);
 void wizchip_gettimeout(wiz_NetTimeout* nettime);
 #ifdef __cplusplus
  }
+#endif
+
 #endif
 
 #endif   // _WIZCHIP_CONF_H_
