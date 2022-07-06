@@ -530,7 +530,7 @@ int8_t check_DNS_timeout(void)
 
 	if(dns_1s_tick >= DNS_WAIT_TIME)
 	{
-		printf("dns_1s_tick: %d in check_DNS_timeout\r\n", dns_1s_tick);
+//		printf("dns_1s_tick: %d in check_DNS_timeout\r\n", dns_1s_tick);
 		dns_1s_tick = 0;
 		if(retry_count >= MAX_DNS_RETRY) {
 			retry_count = 0;
@@ -579,7 +579,7 @@ int8_t DNS_run(uint8_t * dns_ip, uint8_t * name, uint8_t * ip_from_dns)
 		// socket create
 		socket(DNS_SOCKET, Sn_MR_UDP, 0, SF_IO_NONBLOCK);
 		len = dns_makequery(0, (char *)name, pDNSMSG, MAX_DNS_BUF_SIZE);
-		printf("dns_makequery len: %d\r\n", len);
+//		printf("dns_makequery len: %d\r\n", len);
 		dnsState = DNS_STATE_SOCK_CREATE;
 		#ifdef _DNS_DEBUG_
 			printf("> dnsState will be changed to DNS_STATE_SOCK_CREATE in DNS_run\r\n");
@@ -604,7 +604,7 @@ int8_t DNS_run(uint8_t * dns_ip, uint8_t * name, uint8_t * ip_from_dns)
 			  printf("> Receive DNS message from %d.%d.%d.%d(%d). len = %d\r\n", ip[0], ip[1], ip[2], ip[3],port,len);
 		  #endif
          ret = parseDNSMSG(&dhp, pDNSMSG, ip_from_dns);
-         printf("parseDNSMSG ret: %d\r\n", ret);
+//         printf("parseDNSMSG ret: %d\r\n", ret);
 		}
 
 		//Timeout Check
