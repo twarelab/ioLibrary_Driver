@@ -262,6 +262,7 @@ int8_t SNTP_run(datetime *time)
 	uint32_t destip = 0;
 	uint16_t destport;
 	uint16_t startindex = 40; //last 8-byte of data_buf[size is 48 byte] is xmt, so the startindex should be 40
+	int i;
 
 	switch(getSn_SR(NTP_SOCKET))
 	{
@@ -271,6 +272,12 @@ int8_t SNTP_run(datetime *time)
 			if (RSR_len > MAX_SNTP_BUF_SIZE) RSR_len = MAX_SNTP_BUF_SIZE;	// if Rx data size is lager than TX_RX_MAX_BUF_SIZE
 			recvfrom(NTP_SOCKET, data_buf, RSR_len, (uint8_t *)&destip, &destport);
 
+			for(i=0; i<48; i++)
+			{
+				printf("%02X ", data_buf[i]);
+				if(((i + 1) % 16) == 0)
+					printf("\r\n");
+			}
 			get_seconds_from_ntp_server(data_buf,startindex);
 			time->yy = Nowdatetime.yy;
 			time->mo = Nowdatetime.mo;

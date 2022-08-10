@@ -567,7 +567,7 @@ int8_t DNS_run(uint8_t * dns_ip, uint8_t * name, uint8_t * ip_from_dns)
 	static uint16_t len;
 	uint16_t port;
 	int8_t ret_check_timeout;
-	int i;
+//	int i;
 
 	ret = -2;
 
