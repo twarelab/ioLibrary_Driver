@@ -272,12 +272,12 @@ int8_t SNTP_run(datetime *time)
 			if (RSR_len > MAX_SNTP_BUF_SIZE) RSR_len = MAX_SNTP_BUF_SIZE;	// if Rx data size is lager than TX_RX_MAX_BUF_SIZE
 			recvfrom(NTP_SOCKET, data_buf, RSR_len, (uint8_t *)&destip, &destport);
 
-			for(i=0; i<48; i++)
-			{
-				printf("%02X ", data_buf[i]);
-				if(((i + 1) % 16) == 0)
-					printf("\r\n");
-			}
+//			for(i=0; i<48; i++)
+//			{
+//				printf("%02X ", data_buf[i]);
+//				if(((i + 1) % 16) == 0)
+//					printf("\r\n");
+//			}
 			get_seconds_from_ntp_server(data_buf,startindex);
 			time->yy = Nowdatetime.yy;
 			time->mo = Nowdatetime.mo;
