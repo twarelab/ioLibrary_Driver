@@ -55,6 +55,7 @@
 //*****************************************************************************
 #include "socket.h"
 
+#include <stdio.h>
 //M20150401 : Typing Error
 //#define SOCK_ANY_PORT_NUM  0xC000;
 #define SOCK_ANY_PORT_NUM  0xC000

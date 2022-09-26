@@ -659,10 +659,10 @@ void wizchip_settimeout(wiz_NetTimeout* nettime);
  * @param nettime @ref _RTR_ value and @ref _RCR_ value. Refer to @ref wiz_NetTimeout. 
  */
 void wizchip_gettimeout(wiz_NetTimeout* nettime);
+#endif
 #ifdef __cplusplus
  }
 #endif
 
-#endif
 
 #endif   // _WIZCHIP_CONF_H_
