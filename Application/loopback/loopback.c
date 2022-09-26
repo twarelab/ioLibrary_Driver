@@ -68,7 +68,7 @@ int32_t loopback_tcps(uint8_t sn, uint8_t* buf, uint16_t port)
 #ifdef _LOOPBACK_DEBUG_
          printf("%d:TCP server loopback start\r\n",sn);
 #endif
-         if((ret = socket(sn, Sn_MR_TCP, port, 0x00)) != sn) return ret;
+         if((ret = socket(sn, Sn_MR_TCP, port, Sn_MR_ND)) != sn) return ret;
 #ifdef _LOOPBACK_DEBUG_
          printf("%d:Socket opened\r\n",sn);
 #endif
